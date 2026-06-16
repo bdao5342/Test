@@ -9,12 +9,13 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #0f0f13;
+      background: linear-gradient(135deg, #0f0f13 0%, #1a1a24 100%);
       color: #e4e4e8;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 16px;
     }
 
     header {
@@ -23,7 +24,7 @@
     }
 
     header h1 {
-      font-size: 22px;
+      font-size: clamp(20px, 5vw, 28px);
       font-weight: 500;
       letter-spacing: -0.3px;
       color: #f0f0f4;
@@ -39,7 +40,8 @@
       position: relative;
       width: 100%;
       max-width: 720px;
-      height: 520px;
+      aspect-ratio: 680 / 480;
+      margin: 12px 0;
     }
 
     svg#graph {
@@ -47,8 +49,19 @@
       height: 100%;
     }
 
+    /* ─── Node Styles ─── */
     .node-group {
       cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .node-group:focus {
+      outline: none;
+      filter: drop-shadow(0 0 12px rgba(127, 119, 221, 0.6));
+    }
+
+    .node-group:focus-visible {
+      filter: drop-shadow(0 0 12px rgba(127, 119, 221, 0.8));
     }
 
     .node-group circle.pulse {
@@ -56,13 +69,22 @@
     }
 
     .node-group circle.body {
-      transition: r 0.2s ease;
+      transition: r 0.2s ease, filter 0.2s ease;
     }
 
-    .node-group:hover circle.body {
+    .node-group:hover circle.body,
+    .node-group:focus circle.body {
       r: calc(var(--r) + 4px);
+      filter: brightness(1.15);
     }
 
+    .node-group:hover circle.pulse,
+    .node-group:focus circle.pulse {
+      r: calc(var(--r) + 14px);
+      opacity: 0.25;
+    }
+
+    /* ─── Panel Styles ─── */
     #panel {
       position: absolute;
       bottom: 12px;
@@ -70,11 +92,23 @@
       transform: translateX(-50%);
       width: 92%;
       max-width: 560px;
-      background: #1a1a22;
+      background: rgba(26, 26, 34, 0.95);
+      backdrop-filter: blur(10px);
       border: 0.5px solid #333344;
       border-radius: 14px;
       padding: 18px 22px 16px;
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-50%) translateY(20px);
+      transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    #panel.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
     }
 
     #panel h3 {
@@ -101,10 +135,47 @@
       border: none;
       line-height: 1;
       font-family: inherit;
+      padding: 6px 8px;
+      transition: color 0.2s ease, background 0.2s ease, border-radius 0.2s ease;
+      border-radius: 4px;
     }
 
-    #panel-close:hover { color: #aaa; }
+    #panel-close:hover,
+    #panel-close:focus {
+      color: #ddd;
+      background: rgba(255, 255, 255, 0.1);
+    }
 
+    #panel-close:focus {
+      outline: 2px solid #7F77DD;
+      outline-offset: 2px;
+    }
+
+    .panel-breadcrumb {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-breadcrumb button {
+      background: none;
+      border: none;
+      color: #7F77DD;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 11px;
+      padding: 2px 4px;
+      transition: color 0.2s ease;
+    }
+
+    .panel-breadcrumb button:hover {
+      color: #9d95ff;
+    }
+
+    /* ─── Subtopic Buttons ─── */
     .subnodes {
       display: flex;
       flex-wrap: wrap;
@@ -114,26 +185,101 @@
 
     .sub-btn {
       font-size: 12px;
-      padding: 5px 12px;
+      padding: 6px 12px;
       border-radius: 99px;
       border: 0.5px solid #333;
       background: #22222e;
       color: #aaa;
       cursor: pointer;
       font-family: inherit;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s ease;
     }
 
     .sub-btn:hover {
       background: #2e2e3e;
       color: #ddd;
+      border-color: #555;
+      transform: translateY(-1px);
+    }
+
+    .sub-btn:focus {
+      outline: 2px solid #7F77DD;
+      outline-offset: 2px;
+    }
+
+    .sub-btn:active {
+      transform: translateY(0);
     }
 
     #hint {
       font-size: 12px;
       color: #555;
       text-align: center;
-      padding: 6px 0 2px;
+      padding: 12px 0 2px;
+      animation: fadeIn 0.6s ease 0.3s both;
+    }
+
+    /* ─── Responsive Design ─── */
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      header {
+        padding: 20px 16px 0;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      #canvas {
+        margin: 8px 0;
+      }
+
+      #panel {
+        width: 95%;
+        padding: 16px 16px 14px;
+        font-size: 12px;
+      }
+
+      #panel h3 {
+        font-size: 14px;
+      }
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* ─── Focus visible for better keyboard nav ─── */
+    :focus-visible {
+      outline: 2px solid #7F77DD;
+      outline-offset: 2px;
+    }
+
+    /* Scrollbar styling for panel */
+    #panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #panel::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
+    #panel::-webkit-scrollbar-thumb:hover {
+      background: #555;
     }
   </style>
 </head>
@@ -141,13 +287,18 @@
 
 <header>
   <h1>Knowledge Explorer</h1>
-  <p>Click any node to learn more</p>
+  <p>Click any node or press Enter to explore</p>
 </header>
 
 <div id="canvas">
-  <svg id="graph" viewBox="0 0 680 480" aria-label="Interactive knowledge node graph"></svg>
-  <div id="panel">
-    <button id="panel-close" aria-label="Close">×</button>
+  <svg id="graph" viewBox="0 0 680 480" preserveAspectRatio="xMidYMid meet" aria-label="Interactive knowledge node graph"></svg>
+  <div id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+    <button id="panel-close" aria-label="Close panel">×</button>
+    <div class="panel-breadcrumb" id="panel-breadcrumb" style="display: none;">
+      <button id="breadcrumb-back">← Back</button>
+      <span>/</span>
+      <span id="breadcrumb-current"></span>
+    </div>
     <h3 id="panel-title"></h3>
     <p id="panel-desc"></p>
     <div class="subnodes" id="panel-subs"></div>
@@ -157,7 +308,7 @@
 <p id="hint">Click any node to explore</p>
 
 <script>
-  // ─── Topic data ────────────────────────────────────────────────────────────
+  // ─── Topic data ──────────────────────────────────────────────────────────
   // To add a new topic, add an entry here and include its id in the
   // center node's `children` array.
   const topics = {
@@ -217,7 +368,7 @@
     }
   };
 
-  // ─── SVG helpers ──────────────────────────────────────────────────────────
+  // ─── SVG helpers ─────────────────────────────────────────────────────────
   const svg = document.getElementById("graph");
   const NS = "http://www.w3.org/2000/svg";
 
@@ -228,100 +379,129 @@
   }
 
   // ─── Draw edges ──────────────────────────────────────────────────────────
-  for (const childId of topics.center.children) {
-    const c = topics.center, t = topics[childId];
-    const dx = t.x - c.x, dy = t.y - c.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const ux = dx / dist, uy = dy / dist;
-    const x1 = c.x + ux * c.r, y1 = c.y + uy * c.r;
-    const x2 = t.x - ux * t.r, y2 = t.y - uy * t.r;
-    const cpx = (x1 + x2) / 2 + (t.y - c.y) * 0.12;
-    const cpy = (y1 + y2) / 2 - (t.x - c.x) * 0.08;
-    svg.appendChild(el("path", {
-      d: `M${x1},${y1} Q${cpx},${cpy} ${x2},${y2}`,
-      fill: "none",
-      stroke: t.color,
-      "stroke-width": "1.5",
-      "stroke-opacity": "0.35",
-      "stroke-dasharray": "4 3"
-    }));
+  function drawEdges() {
+    for (const childId of topics.center.children) {
+      const c = topics.center, t = topics[childId];
+      const dx = t.x - c.x, dy = t.y - c.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const ux = dx / dist, uy = dy / dist;
+      const x1 = c.x + ux * c.r, y1 = c.y + uy * c.r;
+      const x2 = t.x - ux * t.r, y2 = t.y - uy * t.r;
+      const cpx = (x1 + x2) / 2 + (t.y - c.y) * 0.12;
+      const cpy = (y1 + y2) / 2 - (t.x - c.x) * 0.08;
+      svg.appendChild(el("path", {
+        d: `M${x1},${y1} Q${cpx},${cpy} ${x2},${y2}`,
+        fill: "none",
+        stroke: t.color,
+        "stroke-width": "1.5",
+        "stroke-opacity": "0.35",
+        "stroke-dasharray": "4 3"
+      }));
+    }
   }
 
-  // ─── Draw nodes ───────────────────────────────────────────────────────────
-  for (const node of Object.values(topics)) {
-    const g = document.createElementNS(NS, "g");
-    g.setAttribute("class", "node-group");
-    g.setAttribute("role", "button");
-    g.setAttribute("tabindex", "0");
-    g.setAttribute("aria-label", `Learn about ${node.label}`);
+  // ─── Draw nodes ──────────────────────────────────────────────────────────
+  function drawNodes() {
+    for (const node of Object.values(topics)) {
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "node-group");
+      g.setAttribute("role", "button");
+      g.setAttribute("tabindex", "0");
+      g.setAttribute("aria-label", `Learn about ${node.label}`);
+      g.setAttribute("data-node-id", node.id);
 
-    // Soft glow ring
-    const pulse = el("circle", {
-      class: "pulse",
-      cx: node.x, cy: node.y,
-      r: node.r + 10,
-      fill: node.color,
-      opacity: "0.12"
-    });
-
-    // Main circle
-    const circle = el("circle", {
-      class: "body",
-      cx: node.x, cy: node.y,
-      r: node.r,
-      fill: node.color
-    });
-
-    // Label (handle two-word labels)
-    const words = node.label.split(" ");
-    const lineH = 16;
-    const startY = node.y - ((words.length - 1) * lineH) / 2;
-
-    const textEls = words.map((word, i) => {
-      const t = el("text", {
-        x: node.x,
-        y: startY + i * lineH,
-        "text-anchor": "middle",
-        "dominant-baseline": "central",
-        fill: node.textColor,
-        "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        "font-size": node.id === "center" ? "15" : "13",
-        "font-weight": "500",
-        "pointer-events": "none"
+      // Soft glow ring
+      const pulse = el("circle", {
+        class: "pulse",
+        cx: node.x, cy: node.y,
+        r: node.r + 10,
+        fill: node.color,
+        opacity: "0.12"
       });
-      t.textContent = word;
-      return t;
-    });
 
-    // Hover effect
-    g.addEventListener("mouseenter", () => circle.setAttribute("r", node.r + 4));
-    g.addEventListener("mouseleave", () => circle.setAttribute("r", node.r));
+      // Main circle
+      const circle = el("circle", {
+        class: "body",
+        cx: node.x, cy: node.y,
+        r: node.r,
+        fill: node.color,
+        style: `--r: ${node.r}px;`
+      });
 
-    // Click / keyboard
-    const open = () => showPanel(node);
-    g.addEventListener("click", open);
-    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") open(); });
+      // Label (handle two-word labels)
+      const words = node.label.split(" ");
+      const lineH = 16;
+      const startY = node.y - ((words.length - 1) * lineH) / 2;
 
-    g.appendChild(pulse);
-    g.appendChild(circle);
-    textEls.forEach(t => g.appendChild(t));
-    svg.appendChild(g);
+      const textEls = words.map((word, i) => {
+        const t = el("text", {
+          x: node.x,
+          y: startY + i * lineH,
+          "text-anchor": "middle",
+          "dominant-baseline": "central",
+          fill: node.textColor,
+          "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          "font-size": node.id === "center" ? "15" : "13",
+          "font-weight": "500",
+          "pointer-events": "none"
+        });
+        t.textContent = word;
+        return t;
+      });
+
+      // Click / keyboard
+      const open = () => showPanel(node);
+      g.addEventListener("click", open);
+      g.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      });
+
+      g.appendChild(pulse);
+      g.appendChild(circle);
+      textEls.forEach(t => g.appendChild(t));
+      svg.appendChild(g);
+    }
   }
 
-  // ─── Panel ────────────────────────────────────────────────────────────────
+  // ─── Panel Management ────────────────────────────────────────────────────
+  let currentNode = null;
+  let panelHistory = [];
+
   function showPanel(node) {
+    currentNode = node;
+    panelHistory.push(node);
+
     document.getElementById("panel-title").textContent = node.label;
     document.getElementById("panel-desc").textContent = node.desc;
+
+    // Update breadcrumb
+    const breadcrumb = document.getElementById("panel-breadcrumb");
+    const breadcrumbCurrent = document.getElementById("breadcrumb-current");
+    const breadcrumbBack = document.getElementById("breadcrumb-back");
+
+    if (panelHistory.length > 1) {
+      breadcrumb.style.display = "flex";
+      breadcrumbCurrent.textContent = node.label;
+      breadcrumbBack.onclick = () => goBack();
+    } else {
+      breadcrumb.style.display = "none";
+    }
 
     const subsEl = document.getElementById("panel-subs");
     subsEl.innerHTML = "";
 
-    // Subtopic buttons — customize the onclick action as needed
+    // Subtopic buttons
     (node.subs || []).forEach(s => {
       const btn = document.createElement("button");
       btn.className = "sub-btn";
       btn.textContent = s;
-      btn.onclick = () => alert(`You clicked: ${s} (connect this to your own search or navigation logic)`);
+      btn.onclick = () => {
+        // Replace with your own navigation logic
+        alert(`Selected: ${s}`);
+      };
       subsEl.appendChild(btn);
     });
 
@@ -336,12 +516,61 @@
       subsEl.appendChild(btn);
     });
 
-    document.getElementById("panel").style.display = "block";
+    // Show panel with animation
+    const panel = document.getElementById("panel");
+    panel.classList.add("open");
+    document.body.setAttribute("aria-hidden", "true");
   }
 
-  document.getElementById("panel-close").addEventListener("click", () => {
-    document.getElementById("panel").style.display = "none";
+  function goBack() {
+    panelHistory.pop();
+    if (panelHistory.length > 0) {
+      const prevNode = panelHistory[panelHistory.length - 1];
+      // Temporarily remove from history to avoid duplication
+      const temp = panelHistory.pop();
+      showPanel(prevNode);
+      panelHistory.push(temp);
+    } else {
+      closePanel();
+    }
+  }
+
+  function closePanel() {
+    const panel = document.getElementById("panel");
+    panel.classList.remove("open");
+    document.body.removeAttribute("aria-hidden");
+    currentNode = null;
+    panelHistory = [];
+  }
+
+  document.getElementById("panel-close").addEventListener("click", closePanel);
+
+  // Close on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("panel").classList.contains("open")) {
+      closePanel();
+    }
   });
+
+  // ─── Touch support for mobile ────────────────────────────────────────────
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  svg.addEventListener("touchstart", (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, false);
+
+  svg.addEventListener("touchend", (e) => {
+    touchEndX = e.changedTouches[0].clientX;
+    // Swiping left closes the panel
+    if (touchStartX - touchEndX > 50 && document.getElementById("panel").classList.contains("open")) {
+      closePanel();
+    }
+  }, false);
+
+  // ─── Initialize ──────────────────────────────────────────────────────────
+  drawEdges();
+  drawNodes();
 </script>
 </body>
 </html>
