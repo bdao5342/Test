@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Node Explorer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f13;
+      color: #e4e4e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      padding: 28px 24px 4px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.3px;
+      color: #f0f0f4;
+    }
+
+    header p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    #canvas {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      height: 520px;
+    }
+
+    svg#graph {
+      width: 100%;
+      height: 100%;
+    }
+
+    .node-group {
+      cursor: pointer;
+    }
+
+    .node-group circle.pulse {
+      transition: r 0.3s ease, opacity 0.3s ease;
+    }
+
+    .node-group circle.body {
+      transition: r 0.2s ease;
+    }
+
+    .node-group:hover circle.body {
+      r: calc(var(--r) + 4px);
+    }
+
+    #panel {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 560px;
+      background: #1a1a22;
+      border: 0.5px solid #333344;
+      border-radius: 14px;
+      padding: 18px 22px 16px;
+      display: none;
+    }
+
+    #panel h3 {
+      font-size: 15px;
+      font-weight: 500;
+      color: #f0f0f4;
+      margin-bottom: 6px;
+    }
+
+    #panel p {
+      font-size: 13px;
+      color: #999;
+      line-height: 1.65;
+    }
+
+    #panel-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #666;
+      background: none;
+      border: none;
+      line-height: 1;
+      font-family: inherit;
+    }
+
+    #panel-close:hover { color: #aaa; }
+
+    .subnodes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .sub-btn {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 99px;
+      border: 0.5px solid #333;
+      background: #22222e;
+      color: #aaa;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sub-btn:hover {
+      background: #2e2e3e;
+      color: #ddd;
+    }
+
+    #hint {
+      font-size: 12px;
+      color: #555;
+      text-align: center;
+      padding: 6px 0 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Knowledge Explorer</h1>
+  <p>Click any node to learn more</p>
+</header>
+
+<div id="canvas">
+  <svg id="graph" viewBox="0 0 680 480" aria-label="Interactive knowledge node graph"></svg>
+  <div id="panel">
+    <button id="panel-close" aria-label="Close">×</button>
+    <h3 id="panel-title"></h3>
+    <p id="panel-desc"></p>
+    <div class="subnodes" id="panel-subs"></div>
+  </div>
+</div>
+
+<p id="hint">Click any node to explore</p>
+
+<script>
+  // ─── Topic data ────────────────────────────────────────────────────────────
+  // To add a new topic, add an entry here and include its id in the
+  // center node's `children` array.
+  const topics = {
+    center: {
+      id: "center",
+      label: "Knowledge",
+      x: 340, y: 220, r: 48,
+      color: "#7F77DD",
+      textColor: "#fff",
+      desc: "Explore the branches of human knowledge. Click any connected node to dive in.",
+      children: ["science", "tech", "arts", "history", "math"]
+    },
+    science: {
+      id: "science",
+      label: "Science",
+      x: 180, y: 95, r: 38,
+      color: "#1D9E75",
+      textColor: "#fff",
+      desc: "Science is the systematic study of the natural world through observation and experiment — spanning physics, chemistry, biology, and earth science.",
+      subs: ["Physics", "Chemistry", "Biology", "Astronomy"]
+    },
+    tech: {
+      id: "tech",
+      label: "Technology",
+      x: 500, y: 95, r: 38,
+      color: "#378ADD",
+      textColor: "#fff",
+      desc: "Technology encompasses the tools and systems humans create to solve problems — from ancient fire to modern AI and software.",
+      subs: ["AI & ML", "Web Dev", "Robotics", "Biotech"]
+    },
+    arts: {
+      id: "arts",
+      label: "Arts",
+      x: 130, y: 350, r: 38,
+      color: "#D4537E",
+      textColor: "#fff",
+      desc: "The arts encompass creative disciplines like painting, music, literature, film, dance, and architecture that express human experience and emotion.",
+      subs: ["Music", "Visual Art", "Literature", "Film"]
+    },
+    history: {
+      id: "history",
+      label: "History",
+      x: 550, y: 350, r: 38,
+      color: "#BA7517",
+      textColor: "#fff",
+      desc: "History is the study of past events, civilizations, and human decisions — helping us understand how the present came to be.",
+      subs: ["Ancient", "Medieval", "Modern", "World Wars"]
+    },
+    math: {
+      id: "math",
+      label: "Math",
+      x: 340, y: 420, r: 38,
+      color: "#993556",
+      textColor: "#fff",
+      desc: "Mathematics is the language of logic and structure — from counting and algebra to calculus, statistics, and abstract proofs.",
+      subs: ["Algebra", "Calculus", "Statistics", "Geometry"]
+    }
+  };
+
+  // ─── SVG helpers ──────────────────────────────────────────────────────────
+  const svg = document.getElementById("graph");
+  const NS = "http://www.w3.org/2000/svg";
+
+  function el(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  }
+
+  // ─── Draw edges ──────────────────────────────────────────────────────────
+  for (const childId of topics.center.children) {
+    const c = topics.center, t = topics[childId];
+    const dx = t.x - c.x, dy = t.y - c.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / dist, uy = dy / dist;
+    const x1 = c.x + ux * c.r, y1 = c.y + uy * c.r;
+    const x2 = t.x - ux * t.r, y2 = t.y - uy * t.r;
+    const cpx = (x1 + x2) / 2 + (t.y - c.y) * 0.12;
+    const cpy = (y1 + y2) / 2 - (t.x - c.x) * 0.08;
+    svg.appendChild(el("path", {
+      d: `M${x1},${y1} Q${cpx},${cpy} ${x2},${y2}`,
+      fill: "none",
+      stroke: t.color,
+      "stroke-width": "1.5",
+      "stroke-opacity": "0.35",
+      "stroke-dasharray": "4 3"
+    }));
+  }
+
+  // ─── Draw nodes ───────────────────────────────────────────────────────────
+  for (const node of Object.values(topics)) {
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("class", "node-group");
+    g.setAttribute("role", "button");
+    g.setAttribute("tabindex", "0");
+    g.setAttribute("aria-label", `Learn about ${node.label}`);
+
+    // Soft glow ring
+    const pulse = el("circle", {
+      class: "pulse",
+      cx: node.x, cy: node.y,
+      r: node.r + 10,
+      fill: node.color,
+      opacity: "0.12"
+    });
+
+    // Main circle
+    const circle = el("circle", {
+      class: "body",
+      cx: node.x, cy: node.y,
+      r: node.r,
+      fill: node.color
+    });
+
+    // Label (handle two-word labels)
+    const words = node.label.split(" ");
+    const lineH = 16;
+    const startY = node.y - ((words.length - 1) * lineH) / 2;
+
+    const textEls = words.map((word, i) => {
+      const t = el("text", {
+        x: node.x,
+        y: startY + i * lineH,
+        "text-anchor": "middle",
+        "dominant-baseline": "central",
+        fill: node.textColor,
+        "font-family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "font-size": node.id === "center" ? "15" : "13",
+        "font-weight": "500",
+        "pointer-events": "none"
+      });
+      t.textContent = word;
+      return t;
+    });
+
+    // Hover effect
+    g.addEventListener("mouseenter", () => circle.setAttribute("r", node.r + 4));
+    g.addEventListener("mouseleave", () => circle.setAttribute("r", node.r));
+
+    // Click / keyboard
+    const open = () => showPanel(node);
+    g.addEventListener("click", open);
+    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") open(); });
+
+    g.appendChild(pulse);
+    g.appendChild(circle);
+    textEls.forEach(t => g.appendChild(t));
+    svg.appendChild(g);
+  }
+
+  // ─── Panel ────────────────────────────────────────────────────────────────
+  function showPanel(node) {
+    document.getElementById("panel-title").textContent = node.label;
+    document.getElementById("panel-desc").textContent = node.desc;
+
+    const subsEl = document.getElementById("panel-subs");
+    subsEl.innerHTML = "";
+
+    // Subtopic buttons — customize the onclick action as needed
+    (node.subs || []).forEach(s => {
+      const btn = document.createElement("button");
+      btn.className = "sub-btn";
+      btn.textContent = s;
+      btn.onclick = () => alert(`You clicked: ${s} (connect this to your own search or navigation logic)`);
+      subsEl.appendChild(btn);
+    });
+
+    // Child node links (for the center hub)
+    (node.children || []).forEach(cid => {
+      const child = topics[cid];
+      const btn = document.createElement("button");
+      btn.className = "sub-btn";
+      btn.style.borderColor = child.color;
+      btn.textContent = "→ " + child.label;
+      btn.onclick = () => showPanel(child);
+      subsEl.appendChild(btn);
+    });
+
+    document.getElementById("panel").style.display = "block";
+  }
+
+  document.getElementById("panel-close").addEventListener("click", () => {
+    document.getElementById("panel").style.display = "none";
+  });
+</script>
+</body>
+</html>
