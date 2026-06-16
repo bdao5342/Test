@@ -73,6 +73,10 @@
       transition: r 0.2s ease, filter 0.2s ease;
     }
 
+    .node-group ellipse.shine {
+      transition: opacity 0.2s ease;
+    }
+
     .node-group:hover circle.body,
     .node-group:focus circle.body {
       r: calc(var(--r) + 4px);
@@ -83,6 +87,11 @@
     .node-group:focus circle.pulse {
       r: calc(var(--r) + 14px);
       opacity: 0.25;
+    }
+
+    .node-group:hover ellipse.shine,
+    .node-group:focus ellipse.shine {
+      opacity: 0.5;
     }
 
     /* ─── Panel Styles ─── */
@@ -292,7 +301,9 @@
 </header>
 
 <div id="canvas">
-  <svg id="graph" viewBox="0 0 680 480" preserveAspectRatio="xMidYMid meet" aria-label="Interactive knowledge node graph"></svg>
+  <svg id="graph" viewBox="0 0 680 480" preserveAspectRatio="xMidYMid meet" aria-label="Interactive knowledge node graph">
+    <defs id="gradients"></defs>
+  </svg>
   <div id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
     <button id="panel-close" aria-label="Close panel">×</button>
     <div class="panel-breadcrumb" id="panel-breadcrumb" style="display: none;">
@@ -371,12 +382,46 @@
 
   // ─── SVG helpers ────────────────────────────────────────────────────────────
   const svg = document.getElementById("graph");
+  const gradientsDef = document.getElementById("gradients");
   const NS = "http://www.w3.org/2000/svg";
 
   function el(tag, attrs) {
     const e = document.createElementNS(NS, tag);
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
     return e;
+  }
+
+  // Create radial gradient for sphere effect
+  function createSphereGradient(nodeId, color) {
+    const gradient = el("radialGradient", {
+      id: `sphere-${nodeId}`,
+      cx: "35%",
+      cy: "35%"
+    });
+
+    const stop1 = el("stop", {
+      offset: "0%",
+      "stop-color": color,
+      "stop-opacity": "1"
+    });
+
+    const stop2 = el("stop", {
+      offset: "70%",
+      "stop-color": color,
+      "stop-opacity": "1"
+    });
+
+    const stop3 = el("stop", {
+      offset: "100%",
+      "stop-color": color,
+      "stop-opacity": "0.7"
+    });
+
+    gradient.appendChild(stop1);
+    gradient.appendChild(stop2);
+    gradient.appendChild(stop3);
+
+    gradientsDef.appendChild(gradient);
   }
 
   // ─── Zoom management ────────────────────────────────────────────────────────
@@ -441,6 +486,9 @@
   // ─── Draw nodes ────────────────────────────────────────────────────────────
   function drawNodes() {
     for (const node of Object.values(topics)) {
+      // Create gradient for this node
+      createSphereGradient(node.id, node.color);
+
       const g = document.createElementNS(NS, "g");
       g.setAttribute("class", "node-group");
       g.setAttribute("role", "button");
@@ -457,13 +505,24 @@
         opacity: "0.12"
       });
 
-      // Main circle
+      // Main sphere with radial gradient
       const circle = el("circle", {
         class: "body",
         cx: node.x, cy: node.y,
         r: node.r,
-        fill: node.color,
+        fill: `url(#sphere-${node.id})`,
         style: `--r: ${node.r}px;`
+      });
+
+      // Shine highlight for 3D effect
+      const shine = el("ellipse", {
+        class: "shine",
+        cx: node.x - node.r * 0.3,
+        cy: node.y - node.r * 0.3,
+        rx: node.r * 0.4,
+        ry: node.r * 0.5,
+        fill: "white",
+        opacity: "0.25"
       });
 
       // Label (handle two-word labels)
@@ -502,6 +561,7 @@
 
       g.appendChild(pulse);
       g.appendChild(circle);
+      g.appendChild(shine);
       textEls.forEach(t => g.appendChild(t));
       svg.appendChild(g);
     }
