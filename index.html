@@ -47,6 +47,7 @@
     svg#graph {
       width: 100%;
       height: 100%;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     /* ─── Node Styles ─── */
@@ -308,7 +309,7 @@
 <p id="hint">Click any node to explore</p>
 
 <script>
-  // ─── Topic data ──────────────────────────────────────────────────────────
+  // ─── Topic data ────────────────────────────────────────────────────────────
   // To add a new topic, add an entry here and include its id in the
   // center node's `children` array.
   const topics = {
@@ -368,7 +369,7 @@
     }
   };
 
-  // ─── SVG helpers ─────────────────────────────────────────────────────────
+  // ─── SVG helpers ────────────────────────────────────────────────────────────
   const svg = document.getElementById("graph");
   const NS = "http://www.w3.org/2000/svg";
 
@@ -378,7 +379,44 @@
     return e;
   }
 
-  // ─── Draw edges ──────────────────────────────────────────────────────────
+  // ─── Zoom management ────────────────────────────────────────────────────────
+  let currentZoom = { x: 340, y: 220, scale: 1 };
+  let isAnimating = false;
+
+  function zoomToNode(node) {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    const zoomScale = 1.8;
+    const zoomX = node.x;
+    const zoomY = node.y;
+
+    currentZoom = { x: zoomX, y: zoomY, scale: zoomScale };
+
+    const offsetX = (340 - zoomX * zoomScale) * (680 / (680 * zoomScale));
+    const offsetY = (220 - zoomY * zoomScale) * (480 / (480 * zoomScale));
+
+    svg.style.transformOrigin = `${zoomX}px ${zoomY}px`;
+    svg.style.transform = `scale(${zoomScale}) translate(${offsetX}px, ${offsetY}px)`;
+
+    setTimeout(() => {
+      isAnimating = false;
+    }, 600);
+  }
+
+  function resetZoom() {
+    if (isAnimating) return;
+    isAnimating = true;
+
+    currentZoom = { x: 340, y: 220, scale: 1 };
+    svg.style.transform = "scale(1) translate(0, 0)";
+
+    setTimeout(() => {
+      isAnimating = false;
+    }, 600);
+  }
+
+  // ─── Draw edges ────────────────────────────────────────────────────────────
   function drawEdges() {
     for (const childId of topics.center.children) {
       const c = topics.center, t = topics[childId];
@@ -400,7 +438,7 @@
     }
   }
 
-  // ─── Draw nodes ──────────────────────────────────────────────────────────
+  // ─── Draw nodes ────────────────────────────────────────────────────────────
   function drawNodes() {
     for (const node of Object.values(topics)) {
       const g = document.createElementNS(NS, "g");
@@ -450,7 +488,10 @@
       });
 
       // Click / keyboard
-      const open = () => showPanel(node);
+      const open = () => {
+        zoomToNode(node);
+        showPanel(node);
+      };
       g.addEventListener("click", open);
       g.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") {
@@ -512,7 +553,10 @@
       btn.className = "sub-btn";
       btn.style.borderColor = child.color;
       btn.textContent = "→ " + child.label;
-      btn.onclick = () => showPanel(child);
+      btn.onclick = () => {
+        zoomToNode(child);
+        showPanel(child);
+      };
       subsEl.appendChild(btn);
     });
 
@@ -528,8 +572,11 @@
       const prevNode = panelHistory[panelHistory.length - 1];
       // Temporarily remove from history to avoid duplication
       const temp = panelHistory.pop();
-      showPanel(prevNode);
-      panelHistory.push(temp);
+      resetZoom();
+      setTimeout(() => {
+        showPanel(prevNode);
+        panelHistory.push(temp);
+      }, 600);
     } else {
       closePanel();
     }
@@ -541,6 +588,7 @@
     document.body.removeAttribute("aria-hidden");
     currentNode = null;
     panelHistory = [];
+    resetZoom();
   }
 
   document.getElementById("panel-close").addEventListener("click", closePanel);
@@ -568,7 +616,7 @@
     }
   }, false);
 
-  // ─── Initialize ──────────────────────────────────────────────────────────
+  // ─── Initialize ────────────────────────────────────────────────────────────
   drawEdges();
   drawNodes();
 </script>
