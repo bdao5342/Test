@@ -316,7 +316,7 @@
 <body>
 
 <header>
-  <h1>Knowledge Web Explorer</h1>
+  <h1>CompTIA Sec + Study Guide</h1>
   <p>Drag to pan • Use Mouse Wheel to Zoom • Click nodes to view</p>
 </header>
 
@@ -344,40 +344,40 @@
 <script>
   const topics = {
     center: {
-      id: "center", label: "Knowledge",
+      id: "center", label: "Security Controls",
       x: 340, y: 240, r: 42, color: "#7F77DD", textColor: "#fff",
-      desc: "Explore the branches of human knowledge. Click any connected node to dive in.",
-      children: ["science", "tech", "history", "math", "arts"]
+      desc: "Explore the Exam Domains of the Sec+. Click any connected node to dive in.",
+      children: ["General Security Concepts", "Threats, Vulnerabilities, and Mitigations", "Security Architecture", "Security Operations", "Security Program Management and Oversight"]
     },
     science: {
-      id: "science", label: "Science",
+      id: "science", label: "Security Controls",
       x: 180, y: 110, r: 32, color: "#1D9E75", textColor: "#fff",
-      desc: "Science is the systematic study of the natural world through observation and experiment — spanning physics, chemistry, biology, and earth science.",
-      children: ["physics", "chemistry", "biology", "astronomy"]
+      desc: "The overall encompassing rules and laws surrounding security in the modern world",
+      children: ["Security Controls", "CIA Triad", "Change management", "Cryptographic Solutions"]
     },
     tech: {
-      id: "tech", label: "Technology",
+      id: "tech", label: "Threats, Vulnerabilities, and Mitigations",
       x: 500, y: 110, r: 32, color: "#378ADD", textColor: "#fff",
-      desc: "Technology encompasses the tools and systems humans create to solve problems — from ancient fire to modern AI and software.",
-      children: ["ai_ml", "web_dev", "robotics", "biotech"]
+      desc: "The types of attacks, weaknesses in the system, as well as preventative measures that can be taken",
+      children: ["Threats, Vulnerabilities, and Mitigations", "Threat Vectors and Attack Surfaces", "Types of Vulnerabilities", "Indicators of Compromise","Mitigation Techniques"]
     },
     arts: {
-      id: "arts", label: "Arts",
+      id: "arts", label: "Security Architecture",
       x: 130, y: 340, r: 32, color: "#D4537E", textColor: "#fff",
-      desc: "The arts encompass creative disciplines like painting, music, literature, film, dance, and architecture that express human experience and emotion.",
-      children: ["music", "visual_art", "literature", "film"]
+      desc: "The structure of today's security systems and how it works to protect business from threat actors.",
+      children: ["Architecture Models", "Secure Infrastructure", "Data Types and Classification", "Resiliency"]
     },
     history: {
-      id: "history", label: "History",
+      id: "history", label: "Security Operations",
       x: 550, y: 340, r: 32, color: "#BA7517", textColor: "#fff",
-      desc: "History is the study of past events, civilizations, and human decisions — helping us understand how the present came to be.",
-      children: ["ancient", "medieval", "modern", "world_wars"]
+      desc: "How security functions on a day to day basis as well the processes invovled in keeping operations 100%.",
+      children: ["Securing Baseline", "Asset Management", "Vulnerability Scanning", "Security Monitoring", "Firewall","Identity and Access Management","Scripting and automation","Incident response","Log Data"]
     },
     math: {
-      id: "math", label: "Math",
+      id: "math", label: "Security Program Management and Oversight",
       x: 340, y: 420, r: 32, color: "#993556", textColor: "#fff",
-      desc: "Mathematics is the language of logic and structure — from counting and algebra to calculus, statistics, and abstract proofs.",
-      children: ["algebra", "calculus", "statistics", "geometry"]
+      desc: "The implemenation, integration, and monitoring of security processes and products.",
+      children: ["Security Procedures", "Risk Management", "Compliance ", "Security Awareness"]
     },
 
     physics: { id: "physics", label: "Physics", x: 90, y: 60, r: 18, color: "#167A5B", textColor: "#ccc", desc: "The fundamental study of matter, energy, and the mechanics of spacetime.", parentId: "science", subs: ["Quantum Mechanics", "Relativity", "Thermodynamics"] },
